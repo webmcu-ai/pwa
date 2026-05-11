@@ -1,6 +1,6 @@
 {
-  "name": "webmcu-ai PWA06 Hub",
-  "short_name": "PWA06",
+  "name": "webmcu-ai PWA Hub",
+  "short_name": "PWA",
   "start_url": "./index.html",
   "display": "browser",
   "background_color": "#0a0a0a",
