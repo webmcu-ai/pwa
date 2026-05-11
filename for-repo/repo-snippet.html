@@ -1,0 +1,68 @@
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     webmcu-ai PWA06 — snippet to add to each repo's index.html
+     ═══════════════════════════════════════════════════════════════════════════
+
+  1. Copy sw-for-repos.js → your repo root, rename to sw.js
+  2. Add the lines below to your index.html
+  3. That's it. pwa.js does the rest.
+
+  The button stays fixed top-right, shows:
+    "Install App ($6) →"   if not yet paid   → sends user to pwa06 hub
+    "Install App ↓"        if paid + prompt ready → triggers browser install
+    "App Purchased ✓"      if paid but prompt not available
+    (hidden)               if already running as installed PWA
+═══════════════════════════════════════════════════════════════════════════ -->
+
+<head>
+    <!-- ... your existing head content ... -->
+
+    <!-- PWA manifest — create one per repo or use this minimal version -->
+    <link rel="manifest" href="manifest.json">
+
+    <!-- Install button styles — paste into your existing <style> block -->
+    <style>
+        #myAppBtn {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            z-index: 9999;
+            padding: 8px 14px;
+            background: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: monospace;
+            font-size: 12px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+            display: none; /* pwa.js controls visibility */
+        }
+        #myAppBtn:hover { background: #0056b3; }
+    </style>
+</head>
+
+<body>
+    <!-- ... your existing body content ... -->
+
+    <!-- PWA install button — one line, fixed top-right -->
+    <button id="myAppBtn" onclick="myHandleAppAction()"></button>
+
+    <!-- Minimal per-repo manifest.json (save as manifest.json in repo root) -->
+    <!--
+    {
+      "name": "YOUR REPO FULL NAME",
+      "short_name": "SHORT",
+      "start_url": "./index.html",
+      "display": "standalone",
+      "background_color": "#ffffff",
+      "theme_color": "#000000",
+      "icons": [
+        { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+        { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" }
+      ]
+    }
+    -->
+
+    <!-- Shared pwa logic — loaded from the hub repo, same for all repos -->
+    <script src="https://webmcu-ai.github.io/pwa06/pwa.js"></script>
+</body>
