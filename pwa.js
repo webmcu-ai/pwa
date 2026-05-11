@@ -4,7 +4,7 @@
 // Each repo also needs its own sw.js (same-origin requirement).
 // ─────────────────────────────────────────────────────────────────────────────
 
-const myPwa06HubUrl   = "https://webmcu-ai.github.io/pwa06/";
+const myPwa06HubUrl   = "https://webmcu-ai.github.io/pwa/";
 const myPwa06Salt     = "webmcu_pwa06_2026";
 const myPwa06RepoName = (function() {
     // Derive repo name from current page URL
