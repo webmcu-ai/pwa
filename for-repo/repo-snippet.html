@@ -45,7 +45,9 @@
     <!-- ... your existing body content ... -->
 
     <!-- PWA install button — one line, fixed top-right -->
-    <button id="myAppBtn" onclick="myHandleAppAction()"></button>
+     <button id="myAppBtn" onclick="myHandleAppAction()"></button>
+     <link rel="manifest" href="pwa/manifest.json">
+     <script src="https://webmcu-ai.github.io/pwa/pwa.js"></script>
 
     <!-- Minimal per-repo manifest.json (save as manifest.json in repo root) -->
     <!--
@@ -64,5 +66,4 @@
     -->
 
     <!-- Shared pwa logic — loaded from the hub repo, same for all repos -->
-    <script src="https://webmcu-ai.github.io/pwa06/pwa.js"></script>
 </body>
