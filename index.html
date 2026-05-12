@@ -3,29 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>webmcu-ai Desktop Apps Installation Hub</title>
+    <title>webmcu-ai · PWA Install Hub</title>
     <style>
-        /* Essential layout only */
         * { box-sizing: border-box; margin: 0; padding: 0; }
-
         body { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
-
         .myContainer { width: 100%; max-width: 560px; }
-
         .myHeader { text-align: center; margin-bottom: 32px; }
-
         .myCard { border: 1px solid #ccc; padding: 28px; margin-bottom: 16px; }
-
         .myPriceRow { display: flex; align-items: baseline; gap: 10px; margin-bottom: 6px; }
-
         .myWhatYouGet { margin-top: 12px; padding-left: 16px; }
-
         .myBtn { display: block; width: 100%; padding: 12px; margin-top: 16px; border: 1px solid #000; cursor: pointer; text-decoration: none; text-align: center; background: #fff; }
-
-        /* Status box — needs display toggle */
         .myStatus { padding: 10px; margin-top: 16px; border: 1px solid #ccc; display: none; }
         .myStatus.myShow { display: block; }
-
         .myFooter { text-align: center; margin-top: 24px; }
     </style>
 </head>
@@ -34,15 +23,13 @@
 <div class="myContainer">
     <div class="myHeader">
         <div class="myOrg">webmcu-ai organization</div>
-        <div class="myTitle">webmcu-ai Desktop Apps Installation Hub</div>
+        <div class="myTitle">PWA Install Hub</div>
     </div>
 
-    <!-- Loading state -->
     <div id="myLoadingEl" class="myCard">
         <div>Verifying repository...</div>
     </div>
 
-    <!-- Error state (invalid/blocked origin) -->
     <div id="myErrorEl" class="myCard" style="display:none;">
         <div><b>Repository Not Eligible</b></div>
         <div id="myErrorMsg">
@@ -51,7 +38,6 @@
         </div>
     </div>
 
-    <!-- Main payment/install card -->
     <div id="myMainEl" style="display:none;">
         <div class="myCard">
             <div>Repository</div>
@@ -68,8 +54,7 @@
             <ul class="myWhatYouGet">
                 <li>Install as a standalone desktop app</li>
                 <li>Works offline via service worker cache</li>
-                <li>Creates an icon for easy desktop loading</li>
-                <li>No subscription — one $6 USD payment per repository</li>
+                <li>No subscription — one payment per repo</li>
                 <li>Supports open-source TinyML education</li>
                 <li>All proceeds allow support for webmcu-ai</li>
             </ul>
@@ -88,14 +73,32 @@
 </div>
 
 <script>
-// ─── Config ──────────────────────────────────────────────────────────────────
+// ─── Config ───────────────────────────────────────────────────────────────────
+//
+// STRIPE SETUP INSTRUCTIONS (read before deploying):
+//
+// 1. In your Stripe Dashboard → Payment Links → create a link for $6 USD.
+//
+// 2. In the Payment Link settings → "After payment" → "Redirect customers to your website"
+//    Set the success URL to EXACTLY:
+//
+//      https://webmcu-ai.github.io/pwa/?paid=1&repo={client_reference_id}&origin=PLACEHOLDER
+//
+//    Important: Stripe Payment Links DO support {client_reference_id} as a
+//    substitution token in the success URL. The repo name will be injected there.
+//    The `origin` param cannot be dynamic from Stripe — we store it in
+//    sessionStorage before redirecting and restore it on return.
+//
+// 3. Replace myStripeLink below with your actual Payment Link URL.
+//    It looks like: https://buy.stripe.com/test_xxxxxxxxxxxxxxxx
+//
+// 4. That's it — no server needed for this price point.
+//
+const myStripeLink  = "https://buy.stripe.com/test_fZuaEZ8eKb7ybFq2c5aVa00"; // Done
+const myOrgName     = "webmcu-ai";
+const myGhPagesBase = `https://${myOrgName}.github.io/`;
+const mySecretSalt  = "webmcu_pwa_2026";
 
-const myStripeLink    = "https://buy.stripe.com/test_fZuaEZ8eKb7ybFq2c5aVa00"; // from stripe just for testing
-const myOrgName       = "webmcu-ai";
-const myGhPagesBase   = `https://${myOrgName}.github.io/`;
-const mySecretSalt    = "webmcu_pwa_2026";
-
-// Repos to block even if they exist in the org
 const myBlocklist = [
     "pwa",
     `${myOrgName}.github.io`,
@@ -104,11 +107,12 @@ const myBlocklist = [
 // ─── Token helpers ────────────────────────────────────────────────────────────
 
 function myMakeToken(repoName) {
+    // Token encodes repo + date + salt so it's verifiable client-side
     return btoa(`${repoName}_${new Date().toISOString().split('T')[0]}_${mySecretSalt}`);
 }
 
 function myTokenKey(repoName) {
-    return `_pwa06_paid_${repoName}`;
+    return `_pwa_paid_${repoName}`;
 }
 
 function myIsPaid(repoName) {
@@ -122,6 +126,20 @@ function myIsPaid(repoName) {
 
 function myStorePaidToken(repoName) {
     localStorage.setItem(myTokenKey(repoName), myMakeToken(repoName));
+}
+
+// ─── sessionStorage: preserve origin across Stripe redirect ──────────────────
+//
+// Payment Links can only inject {client_reference_id} into the success URL,
+// not an arbitrary `origin` param. We save origin to sessionStorage before
+// the user leaves, and restore it when Stripe sends them back.
+
+function mySaveOriginForReturn(repoName, originUrl) {
+    sessionStorage.setItem(`_pwa_origin_${repoName}`, originUrl);
+}
+
+function myRestoreOrigin(repoName) {
+    return sessionStorage.getItem(`_pwa_origin_${repoName}`) || null;
 }
 
 // ─── UI helpers ───────────────────────────────────────────────────────────────
@@ -146,7 +164,6 @@ function myShowMain() {
 // ─── GitHub org repo check ────────────────────────────────────────────────────
 
 async function myFetchOrgRepos() {
-    // Handles up to 300 repos (3 pages × 100)
     let myNames = [];
     for (let myPage = 1; myPage <= 3; myPage++) {
         const myRes = await fetch(
@@ -166,12 +183,11 @@ async function myIsOrgRepo(repoName) {
         const myNames = await myFetchOrgRepos();
         return myNames.includes(repoName);
     } catch(e) {
-        // GitHub API failed — fail closed (deny)
-        return false;
+        return false; // fail closed
     }
 }
 
-// ─── Parse origin param ───────────────────────────────────────────────────────
+// ─── Parse URL params ─────────────────────────────────────────────────────────
 
 function myParseOrigin() {
     const myParams = new URLSearchParams(window.location.search);
@@ -179,9 +195,7 @@ function myParseOrigin() {
     if (!myOrigin) return null;
     try {
         const myDecoded = decodeURIComponent(myOrigin);
-        // Must start with the org's GitHub Pages base
         if (!myDecoded.startsWith(myGhPagesBase)) return null;
-        // Extract repo name: webmcu-ai.github.io/REPONAME/...
         const myPath = myDecoded.slice(myGhPagesBase.length);
         const myRepo = myPath.split('/')[0];
         if (!myRepo) return null;
@@ -193,31 +207,28 @@ function myParseOrigin() {
 
 function myBuildPaidUI(repoName, originUrl) {
     const myEl = document.getElementById('myActionEl');
+    const myToken = myMakeToken(repoName);
     myEl.innerHTML = `
         <div style="margin-top:16px;">✓ Payment verified for <strong>${repoName}</strong></div>
-        <a href="${encodeURI(originUrl)}?pwa_token=${myMakeToken(repoName)}" class="myBtn">
+        <a href="${encodeURI(originUrl)}?pwa_token=${myToken}" class="myBtn">
             → Return &amp; Install App
         </a>
-        <button class="myBtn" onclick="myReturnWithToken('${repoName}','${originUrl}')">
+        <button class="myBtn" onclick="myReturn('${originUrl}')">
             Already installed — just return
         </button>
     `;
 }
 
-function myReturnWithToken(repoName, originUrl) {
-    window.location.href = `${encodeURI(originUrl)}?pwa_token=${myMakeToken(repoName)}`;
-}
-
 function myBuildUnpaidUI(repoName, originUrl) {
     const myEl = document.getElementById('myActionEl');
-    // Stripe success_url passes session_id and echoes origin back here
-    const mySuccessUrl = encodeURIComponent(
-        `${window.location.origin}${window.location.pathname}?origin=${encodeURIComponent(originUrl)}&session_id={CHECKOUT_SESSION_ID}`
-    );
-    const myStripeUrl = `${myStripeLink}?success_url=${mySuccessUrl}&client_reference_id=${repoName}`;
+
+    // Stripe Payment Links accept ?client_reference_id= as a URL param.
+    // This is the CORRECT way to pass metadata to a Payment Link (not Checkout).
+    // Stripe will substitute {client_reference_id} into your success_url.
+    const myStripeUrl = `${myStripeLink}?client_reference_id=${encodeURIComponent(repoName)}`;
 
     myEl.innerHTML = `
-        <a href="${myStripeUrl}" class="myBtn">
+        <a href="${myStripeUrl}" class="myBtn" onclick="mySaveOriginForReturn('${repoName}','${originUrl}')">
             Pay $6 USD via Stripe →
         </a>
         <button class="myBtn" onclick="myReturn('${originUrl}')">
@@ -230,23 +241,69 @@ function myReturn(originUrl) {
     window.location.href = originUrl;
 }
 
-// ─── Handle Stripe return (session_id present) ────────────────────────────────
+// ─── Handle Stripe return ─────────────────────────────────────────────────────
+//
+// Stripe redirects back to this page with ?paid=1&repo=REPONAME
+// (because your success URL uses {client_reference_id} for the repo token).
+// We restore the origin from sessionStorage, store the paid token, then
+// redirect the user back to the app.
 
-function myHandleStripeReturn(repoName, originUrl) {
-    // Stripe returned — treat as paid (client-side only at this price point)
+async function myHandleStripeReturn(repoName) {
+    // Validate the repo is real before granting access
+    const myValid = await myIsOrgRepo(repoName);
+    if (!myValid) {
+        myShowError(`Payment received but <strong>${repoName}</strong> is not a recognized repo.
+            Please contact support via GitHub.`);
+        return;
+    }
+
     myStorePaidToken(repoName);
-    // Clean the URL
-    window.history.replaceState({}, document.title, window.location.pathname +
-        `?origin=${encodeURIComponent(originUrl)}`);
-    myShowStatus('✓ Payment confirmed! Returning you to the app...');
-    setTimeout(() => {
-        window.location.href = `${encodeURI(originUrl)}?pwa_token=${myMakeToken(repoName)}`;
-    }, 1800);
+
+    // Restore origin from sessionStorage
+    const myOriginUrl = myRestoreOrigin(repoName);
+
+    // Clean the URL (remove ?paid=1&repo=... to avoid re-triggering on refresh)
+    const myCleanParams = myOriginUrl
+        ? `?origin=${encodeURIComponent(myOriginUrl)}`
+        : '';
+    window.history.replaceState({}, document.title,
+        window.location.pathname + myCleanParams);
+
+    // Show main card so user sees confirmed state
+    document.getElementById('myRepoNameEl').textContent = repoName;
+    document.getElementById('myRepoUrlEl').textContent = myOriginUrl || '(origin not found)';
+    myShowMain();
+
+    if (myOriginUrl) {
+        myShowStatus('✓ Payment confirmed! Returning you to the app...');
+        setTimeout(() => {
+            window.location.href = `${encodeURI(myOriginUrl)}?pwa_token=${myMakeToken(repoName)}`;
+        }, 1800);
+    } else {
+        // sessionStorage didn't survive (different browser tab, etc.)
+        // Show the paid UI so user can manually navigate back
+        myBuildPaidUI(repoName, myGhPagesBase + repoName + '/');
+        myShowStatus('✓ Payment confirmed! Use the button below to return to the app, or re-open it from your original tab.');
+    }
 }
 
 // ─── Main init ────────────────────────────────────────────────────────────────
 
 async function myInit() {
+    const myParams = new URLSearchParams(window.location.search);
+
+    // ── Case 1: Stripe returned us here with ?paid=1&repo=REPONAME ──
+    // (Your Stripe success URL must be set to:
+    //  https://webmcu-ai.github.io/pwa/?paid=1&repo={client_reference_id})
+    if (myParams.get('paid') === '1' && myParams.get('repo')) {
+        const myRepoName = myParams.get('repo');
+        document.getElementById('myLoadingEl').querySelector('div').textContent =
+            'Confirming payment...';
+        await myHandleStripeReturn(myRepoName);
+        return;
+    }
+
+    // ── Case 2: Normal entry with ?origin= ──
     const myParsed = myParseOrigin();
 
     if (!myParsed) {
@@ -260,7 +317,6 @@ async function myInit() {
 
     const { origin: myOriginUrl, repo: myRepoName } = myParsed;
 
-    // Check org membership via GitHub API
     const myValid = await myIsOrgRepo(myRepoName);
     if (!myValid) {
         myShowError(
@@ -270,26 +326,17 @@ async function myInit() {
         return;
     }
 
-    // Populate UI
     document.getElementById('myRepoNameEl').textContent = myRepoName;
     document.getElementById('myRepoUrlEl').textContent = myOriginUrl;
     myShowMain();
 
-    const myParams = new URLSearchParams(window.location.search);
-
-    // Case 1: Stripe just returned with session_id
-    if (myParams.get('session_id')) {
-        myHandleStripeReturn(myRepoName, myOriginUrl);
-        return;
-    }
-
-    // Case 2: Already paid (visited hub again)
+    // Case 2a: Already paid
     if (myIsPaid(myRepoName)) {
         myBuildPaidUI(myRepoName, myOriginUrl);
         return;
     }
 
-    // Case 3: Not yet paid
+    // Case 2b: Not yet paid
     myBuildUnpaidUI(myRepoName, myOriginUrl);
 }
 
