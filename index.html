@@ -5,259 +5,28 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>webmcu-ai · PWA Install Hub</title>
     <style>
-        :root {
-            --bg: #0a0a0a;
-            --surface: #111;
-            --border: #222;
-            --accent: #00e5ff;
-            --accent2: #ff6b35;
-            --text: #f0f0f0;
-            --muted: #666;
-            --success: #00c853;
-            --error: #ff3d3d;
-            --font-mono: 'Courier New', Courier, monospace;
-        }
-
+        /* Essential layout only */
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
-        body {
-            background: var(--bg);
-            color: var(--text);
-            font-family: var(--font-mono);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
+        body { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
 
-        /* Subtle grid background */
-        body::before {
-            content: '';
-            position: fixed;
-            inset: 0;
-            background-image:
-                linear-gradient(rgba(0,229,255,0.03) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(0,229,255,0.03) 1px, transparent 1px);
-            background-size: 40px 40px;
-            pointer-events: none;
-            z-index: 0;
-        }
+        .myContainer { width: 100%; max-width: 560px; }
 
-        .myContainer {
-            position: relative;
-            z-index: 1;
-            width: 100%;
-            max-width: 560px;
-        }
+        .myHeader { text-align: center; margin-bottom: 32px; }
 
-        .myHeader {
-            text-align: center;
-            margin-bottom: 32px;
-        }
+        .myCard { border: 1px solid #ccc; padding: 28px; margin-bottom: 16px; }
 
-        .myOrg {
-            font-size: 11px;
-            letter-spacing: 4px;
-            color: var(--accent);
-            text-transform: uppercase;
-            margin-bottom: 8px;
-        }
+        .myPriceRow { display: flex; align-items: baseline; gap: 10px; margin-bottom: 6px; }
 
-        .myTitle {
-            font-size: 28px;
-            font-weight: bold;
-            letter-spacing: -1px;
-            color: var(--text);
-        }
+        .myWhatYouGet { margin-top: 12px; padding-left: 16px; }
 
-        .myTitle span {
-            color: var(--accent);
-        }
+        .myBtn { display: block; width: 100%; padding: 12px; margin-top: 16px; border: 1px solid #000; cursor: pointer; text-decoration: none; text-align: center; background: #fff; }
 
-        .myCard {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 4px;
-            padding: 28px;
-            margin-bottom: 16px;
-        }
-
-        .myLabel {
-            font-size: 10px;
-            letter-spacing: 3px;
-            color: var(--muted);
-            text-transform: uppercase;
-            margin-bottom: 8px;
-        }
-
-        .myRepoName {
-            font-size: 22px;
-            color: var(--accent);
-            margin-bottom: 4px;
-            word-break: break-all;
-        }
-
-        .myRepoUrl {
-            font-size: 11px;
-            color: var(--muted);
-            margin-bottom: 20px;
-            word-break: break-all;
-        }
-
-        .myDivider {
-            border: none;
-            border-top: 1px solid var(--border);
-            margin: 20px 0;
-        }
-
-        .myPriceRow {
-            display: flex;
-            align-items: baseline;
-            gap: 10px;
-            margin-bottom: 6px;
-        }
-
-        .myPrice {
-            font-size: 36px;
-            font-weight: bold;
-            color: var(--text);
-        }
-
-        .myPriceSub {
-            font-size: 12px;
-            color: var(--muted);
-        }
-
-        .myWhatYouGet {
-            font-size: 12px;
-            color: var(--muted);
-            line-height: 1.8;
-            margin-top: 12px;
-        }
-
-        .myWhatYouGet li {
-            list-style: none;
-            padding-left: 0;
-        }
-
-        .myWhatYouGet li::before {
-            content: '→ ';
-            color: var(--accent);
-        }
-
-        .myBtn {
-            display: block;
-            width: 100%;
-            padding: 16px;
-            margin-top: 24px;
-            background: var(--accent);
-            color: #000;
-            border: none;
-            border-radius: 3px;
-            font-family: var(--font-mono);
-            font-size: 13px;
-            font-weight: bold;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            cursor: pointer;
-            text-decoration: none;
-            text-align: center;
-            transition: background 0.15s, transform 0.1s;
-        }
-
-        .myBtn:hover { background: #33eeff; transform: translateY(-1px); }
-        .myBtn:active { transform: translateY(0); }
-
-        .myBtnInstall {
-            background: var(--success);
-        }
-        .myBtnInstall:hover { background: #00e060; }
-
-        .myBtnSecondary {
-            background: transparent;
-            color: var(--muted);
-            border: 1px solid var(--border);
-            margin-top: 10px;
-            font-size: 11px;
-        }
-        .myBtnSecondary:hover { background: var(--border); color: var(--text); transform: none; }
-
-        .myStatus {
-            text-align: center;
-            padding: 12px;
-            border-radius: 3px;
-            font-size: 12px;
-            letter-spacing: 1px;
-            margin-top: 16px;
-            display: none;
-        }
+        /* Status box — needs display toggle */
+        .myStatus { padding: 10px; margin-top: 16px; border: 1px solid #ccc; display: none; }
         .myStatus.myShow { display: block; }
-        .myStatus.myOk { background: rgba(0,200,83,0.1); border: 1px solid var(--success); color: var(--success); }
-        .myStatus.myErr { background: rgba(255,61,61,0.1); border: 1px solid var(--error); color: var(--error); }
-        .myStatus.myInfo { background: rgba(0,229,255,0.08); border: 1px solid var(--accent); color: var(--accent); }
 
-        .myFooter {
-            text-align: center;
-            font-size: 10px;
-            color: var(--muted);
-            margin-top: 24px;
-            line-height: 2;
-        }
-
-        .myFooter a { color: var(--muted); text-decoration: none; }
-        .myFooter a:hover { color: var(--accent); }
-
-        /* Loading state */
-        .myLoading {
-            text-align: center;
-            padding: 60px 20px;
-        }
-
-        .mySpinner {
-            display: inline-block;
-            width: 24px;
-            height: 24px;
-            border: 2px solid var(--border);
-            border-top-color: var(--accent);
-            border-radius: 50%;
-            animation: mySpin 0.8s linear infinite;
-            margin-bottom: 16px;
-        }
-
-        @keyframes mySpin { to { transform: rotate(360deg); } }
-
-        .myError {
-            text-align: center;
-            padding: 40px 20px;
-            color: var(--error);
-        }
-
-        .myErrorTitle {
-            font-size: 18px;
-            margin-bottom: 10px;
-        }
-
-        .myErrorSub {
-            font-size: 12px;
-            color: var(--muted);
-            line-height: 1.8;
-        }
-
-        /* Installed state */
-        .myInstalledBadge {
-            display: inline-block;
-            padding: 4px 10px;
-            background: rgba(0,200,83,0.1);
-            border: 1px solid var(--success);
-            color: var(--success);
-            font-size: 10px;
-            letter-spacing: 2px;
-            border-radius: 2px;
-            margin-left: 10px;
-            vertical-align: middle;
-        }
+        .myFooter { text-align: center; margin-top: 24px; }
     </style>
 </head>
 <body>
@@ -265,19 +34,18 @@
 <div class="myContainer">
     <div class="myHeader">
         <div class="myOrg">webmcu-ai organization</div>
-        <div class="myTitle">PWA<span>06</span> Install Hub</div>
+        <div class="myTitle">PWA06 Install Hub</div>
     </div>
 
     <!-- Loading state -->
-    <div id="myLoadingEl" class="myCard myLoading">
-        <div class="mySpinner"></div>
-        <div style="font-size:12px; color:var(--muted); letter-spacing:2px;">VERIFYING REPOSITORY...</div>
+    <div id="myLoadingEl" class="myCard">
+        <div>Verifying repository...</div>
     </div>
 
     <!-- Error state (invalid/blocked origin) -->
-    <div id="myErrorEl" class="myCard myError" style="display:none;">
-        <div class="myErrorTitle">⚠ Repository Not Eligible</div>
-        <div class="myErrorSub" id="myErrorMsg">
+    <div id="myErrorEl" class="myCard" style="display:none;">
+        <div><b>Repository Not Eligible</b></div>
+        <div id="myErrorMsg">
             This URL is not part of the webmcu-ai organization.<br>
             Only public repositories in the organization can use this hub.
         </div>
@@ -286,15 +54,15 @@
     <!-- Main payment/install card -->
     <div id="myMainEl" style="display:none;">
         <div class="myCard">
-            <div class="myLabel">Repository</div>
-            <div class="myRepoName" id="myRepoNameEl">—</div>
-            <div class="myRepoUrl" id="myRepoUrlEl">—</div>
+            <div>Repository</div>
+            <div id="myRepoNameEl">—</div>
+            <div id="myRepoUrlEl">—</div>
 
-            <hr class="myDivider">
+            <hr style="margin: 16px 0;">
 
-            <div class="myLabel">Desktop PWA — One-Time Payment</div>
+            <div>Desktop PWA — One-Time Payment</div>
             <div class="myPriceRow">
-                <div class="myPrice">$6 <span style="font-size:16px; color:var(--muted)">USD</span></div>
+                <div>$6 USD</div>
             </div>
 
             <ul class="myWhatYouGet">
@@ -302,7 +70,7 @@
                 <li>Works offline via service worker cache</li>
                 <li>No subscription — one payment per repo</li>
                 <li>Supports open-source TinyML education</li>
-                <li>All proceeds allow support for webmcu-ai </li>
+                <li>All proceeds allow support for webmcu-ai</li>
             </ul>
 
             <div id="myActionEl"></div>
@@ -357,10 +125,10 @@ function myStorePaidToken(repoName) {
 
 // ─── UI helpers ───────────────────────────────────────────────────────────────
 
-function myShowStatus(msg, type = 'myInfo') {
+function myShowStatus(msg) {
     const el = document.getElementById('myStatusEl');
     el.textContent = msg;
-    el.className = `myStatus myShow ${type}`;
+    el.className = 'myStatus myShow';
 }
 
 function myShowError(msg) {
@@ -425,14 +193,11 @@ function myParseOrigin() {
 function myBuildPaidUI(repoName, originUrl) {
     const myEl = document.getElementById('myActionEl');
     myEl.innerHTML = `
-        <div class="myStatus myShow myOk" style="margin-top:20px;">
-            ✓ Payment verified for <strong>${repoName}</strong>
-        </div>
-        <a href="${encodeURI(originUrl)}?pwa_token=${myMakeToken(repoName)}"
-           class="myBtn myBtnInstall">
+        <div style="margin-top:16px;">✓ Payment verified for <strong>${repoName}</strong></div>
+        <a href="${encodeURI(originUrl)}?pwa_token=${myMakeToken(repoName)}" class="myBtn">
             → Return &amp; Install App
         </a>
-        <button class="myBtn myBtnSecondary" onclick="myReturnWithToken('${repoName}','${originUrl}')">
+        <button class="myBtn" onclick="myReturnWithToken('${repoName}','${originUrl}')">
             Already installed — just return
         </button>
     `;
@@ -454,7 +219,7 @@ function myBuildUnpaidUI(repoName, originUrl) {
         <a href="${myStripeUrl}" class="myBtn">
             Pay $6 USD via Stripe →
         </a>
-        <button class="myBtn myBtnSecondary" onclick="myReturn('${originUrl}')">
+        <button class="myBtn" onclick="myReturn('${originUrl}')">
             ← Back to ${repoName}
         </button>
     `;
@@ -472,7 +237,7 @@ function myHandleStripeReturn(repoName, originUrl) {
     // Clean the URL
     window.history.replaceState({}, document.title, window.location.pathname +
         `?origin=${encodeURIComponent(originUrl)}`);
-    myShowStatus('✓ Payment confirmed! Returning you to the app...', 'myOk');
+    myShowStatus('✓ Payment confirmed! Returning you to the app...');
     setTimeout(() => {
         window.location.href = `${encodeURI(originUrl)}?pwa_token=${myMakeToken(repoName)}`;
     }, 1800);
@@ -487,8 +252,7 @@ async function myInit() {
         myShowError(
             `No valid <code>?origin=</code> parameter found.<br><br>
              This hub is called automatically from each webmcu-ai repo's install button.<br>
-             Visit <a href="https://github.com/webmcu-ai" style="color:var(--accent)">
-             github.com/webmcu-ai</a> to browse available tools.`
+             Visit <a href="https://github.com/webmcu-ai">github.com/webmcu-ai</a> to browse available tools.`
         );
         return;
     }
